@@ -8,9 +8,9 @@
 - tensorflow==2.12.0
 - joblib==1.1.0
 - loguru==0.5.3
-- sklearn==0.0
-- scipy==1.7.1
-- clickhouse-driver==0.2.0.post1
+- sklearn==0.22.2.post1  
+- scipy==1.3.3
+- clickhouse-driver==0.2.5
 
 ### Как установить
 ```
