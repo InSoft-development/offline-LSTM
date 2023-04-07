@@ -27,12 +27,14 @@ pip install -r requirements.txt
 
 Запустите следующую команду для запуска программы:
    
-    `python predict_offline.py --config_path=path/to/config --file_format=db --csv_kks=False`
+    python predict_offline.py --config_path=path/to/config --file_format=db --csv_kks=False
    
 Обязательными аргументами являются путь к файлу конфигурации (`--config_path`), формат входных данных (`--file_format`), который может иметь следующие значения csv,json и SQLite, а также путь к файлу сконфигурированной группы KKS (`--csv_kks`), который может иметь значение `False` или путь к csv-файлу. 
 
 ### Пример запуска
-`python predcit_offline.py --config_path SOCHI`
+```
+python predcit_offline.py --config_path SOCHI
+```
 
 
 ### Ожидаемые результаты
