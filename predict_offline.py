@@ -171,9 +171,10 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
 
     # Save reports
     rolling_loss = df_lstm.rolling(window=ROLLING_MEAN_LOSS, axis='rows', min_periods=1).mean()
+    rolling_loss = rolling_loss.drop(columns=zero_group)
+    rolling_loss = rolling_loss.drop(columns = ['softmax','index_'])
     treshold = hist_threshold(rolling_loss['target_value'], ANOMALY_TRESHOLD)
     interval_list, idx_list = get_anomaly_interval(rolling_loss['target_value'], treshold, min_interval_len=COUNT_ANOMALY)
-    rolling_loss = rolling_loss.drop(columns=zero_group)
     time = df_lstm.index
     index_ = df_lstm['index_']
     for j in idx_list:
