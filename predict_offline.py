@@ -67,9 +67,11 @@ elif opt.file_format == 'sqlite':
     test_df = pd.read_sql_query("SELECT * FROM 'data_train'", cnx)
 
 # Preprocess data
+test_df['index'] = test_df.index
 test_df = test_df[test_df[POWER_ID] > POWER_LIMIT]
 test_time = test_df['timestamp']
-test_df = test_df.drop(columns=['timestamp'])
+index = test_df['index']
+test_df = test_df.drop(columns=['timestamp','index'])
 
 if MEAN_NAN:
     test_df = test_df.fillna(test_df.mean())
@@ -147,6 +149,7 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
     df_lstm = pd.DataFrame(each_loss, columns=scaled_data.columns)
     df_lstm['target_value'] = loss
     df_lstm['softmax'] = prob
+    df_lstm['index_'] = np.array(index)
     df_lstm.index = test_time[:len_size][::LAG]
 
     try:
@@ -172,15 +175,15 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
     interval_list, idx_list = get_anomaly_interval(rolling_loss['target_value'], treshold, min_interval_len=COUNT_ANOMALY)
     rolling_loss = rolling_loss.drop(columns=zero_group)
     time = df_lstm.index
-
+    index_ = df_lstm['index_']
     for j in idx_list:
         top_list = rolling_loss[j[0]:j[1]].drop(columns='target_value').mean().sort_values(ascending=False).index[:COUNT_TOP].to_list()
-
+        idx = [int(index_[j[0]]), int(index_[j[1]])]
         # Create a dictionary for each anomaly
         report_dict = {
             "time": [str(time[j[0]]), str(time[j[1]])],
             "len": j[1] - j[0],
-            "index": j,
+            "index": idx,
             "top_sensors": top_list
         }
         dict_list.append(report_dict)
