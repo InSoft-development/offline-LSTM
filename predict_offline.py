@@ -49,6 +49,7 @@ COUNT_ANOMALY = config['COUNT_ANOMALY']
 ROLLING_MEAN_LOSS = config['ROLLING_MEAN_LOSS']
 ANOMALY_TRESHOLD = config['ANOMALY_TRESHOLD']
 COUNT_TOP = config['COUNT_TOP']
+POWER_FILL = config['POWER_FILL']
 
 # Create directories if they don't exist
 os.makedirs(CSV_SAVE_RESULT, exist_ok=True)
@@ -67,8 +68,11 @@ elif opt.file_format == 'sqlite':
     test_df = pd.read_sql_query("SELECT * FROM 'data_train'", cnx)
 
 # Preprocess data
+time_ = test_df['timestamp']
+# logger.warning(time_)
 test_df['index'] = test_df.index
 test_df = test_df[test_df[POWER_ID] > POWER_LIMIT]
+logger.warning(test_df)
 test_time = test_df['timestamp']
 index = test_df['index']
 test_df = test_df.drop(columns=['timestamp','index'])
@@ -149,9 +153,21 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
     df_lstm = pd.DataFrame(each_loss, columns=scaled_data.columns)
     df_lstm['target_value'] = loss
     df_lstm['softmax'] = prob
-    df_lstm['index_'] = np.array(index)
+    # df_lstm['timestamp'] = np.array(test_time)
     df_lstm.index = test_time[:len_size][::LAG]
-
+    print(str(df_lstm.index[0]))
+    df_timestamps = pd.DataFrame()
+    df_timestamps['timestamp'] = time_
+    print(df_timestamps)
+    df_lstm = pd.merge(df_lstm, df_timestamps, on='timestamp', how='right')
+    # logger.info(df_lstm)
+    # df_lstm['index_'] = np.array(index)
+      # Можно указать 'zeroes', чтобы заполнять нулями
+    if POWER_FILL == 'last_value':
+        df_lstm.fillna(method='ffill', inplace=True)  # Заполняем пропущенные значения последними непустыми значениями
+    elif POWER_FILL == 'zeroes':
+        df_lstm.fillna(0, inplace=True) 
+    logger.error(df_lstm)
     try:
         if i != 0:
             df_lstm = df_lstm.drop(columns=DROP_LIST)
@@ -168,23 +184,20 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
 
     df_lstm.to_csv(f'{CSV_SAVE_RESULT}/lstm_group_{i}.csv')
     data.to_csv(f'{CSV_DATA}/group_{i}.csv')
-
-    # Save reports
+    logger.info(df_lstm)
     rolling_loss = df_lstm.rolling(window=ROLLING_MEAN_LOSS, axis='rows', min_periods=1).mean()
     rolling_loss = rolling_loss.drop(columns=zero_group)
-    rolling_loss = rolling_loss.drop(columns = ['softmax','index_'])
+    rolling_loss = rolling_loss.drop(columns = ['softmax'])
     treshold = hist_threshold(rolling_loss['target_value'], ANOMALY_TRESHOLD)
     interval_list, idx_list = get_anomaly_interval(rolling_loss['target_value'], treshold, min_interval_len=COUNT_ANOMALY)
-    time = df_lstm.index
-    index_ = df_lstm['index_']
+    time = df_lstm['timestamp']
     for j in idx_list:
         top_list = rolling_loss[j[0]:j[1]].drop(columns='target_value').mean().sort_values(ascending=False).index[:COUNT_TOP].to_list()
-        idx = [int(index_[j[0]]), int(index_[j[1]])]
         # Create a dictionary for each anomaly
         report_dict = {
-            "time": [str(time[j[0]]), str(time[j[1]])],
+            "time": (str(time[j[0]]), str(time[j[1]])),
             "len": j[1] - j[0],
-            "index": idx,
+            "index": j,
             "top_sensors": top_list
         }
         dict_list.append(report_dict)
