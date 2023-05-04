@@ -74,7 +74,7 @@ def get_interval(data,loss,df,time,count_anomaly,anomaly_treshold,left_space, ri
       
       i+=1
     return report_list, data_list, history_list
-def get_anomaly_interval(loss, threshold,min_interval_len):
+def get_anomaly_interval(loss, threshold_short, threshold_long, len_long, len_short,count_continue_short = 10, count_continue_long = 15):
   interval_list = []
   loss_interval = []
   count = 0
@@ -83,13 +83,29 @@ def get_anomaly_interval(loss, threshold,min_interval_len):
   sum_anomaly = 0
   for val in loss:
     i+=1
-    if val>threshold:
+    if val>threshold_long:
       loss_interval.append(val)
     else:
        count+=1
        loss_interval.append(val)
-       if count>5:
-         if len(loss_interval)>min_interval_len:
+       if count>count_continue_long:
+         if len(loss_interval)>len_long:
+          interval_list.append(loss_interval)
+          logger.info(f'Add anomaly interval, len {len(loss_interval)}')
+          idx_list.append((i-len(loss_interval),i))
+          sum_anomaly+=len(loss_interval)
+         count = 0
+         loss_interval.clear()
+  i = 0
+  for val in loss:
+    i+=1
+    if val>threshold_short:
+      loss_interval.append(val)
+    else:
+       count+=1
+       loss_interval.append(val)
+       if count>count_continue_short:
+         if len(loss_interval)>len_short:
           interval_list.append(loss_interval)
           logger.info(f'Add anomaly interval, len {len(loss_interval)}')
           idx_list.append((i-len(loss_interval),i))
