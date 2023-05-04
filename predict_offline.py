@@ -13,6 +13,8 @@ import clickhouse_connect
 from utils.smooth import exponential_smoothing, double_exponential_smoothing
 from utils.utils import load_config, get_len_size, hist_threshold, get_anomaly_interval
 
+import matplotlib.pyplot as plt
+
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
@@ -45,11 +47,16 @@ CSV_SAVE_RESULT = config['CSV_SAVE_RESULT']
 CSV_DATA = config['CSV_DATA']
 JSON_DATA = config['JSON_DATA']
 TEST_FILE = config['TEST_FILE']
-COUNT_ANOMALY = config['COUNT_ANOMALY']
 ROLLING_MEAN_LOSS = config['ROLLING_MEAN_LOSS']
-ANOMALY_TRESHOLD = config['ANOMALY_TRESHOLD']
 COUNT_TOP = config['COUNT_TOP']
+LEN_LONG_ANOMALY = config['LEN_LONG_ANOMALY']
+LEN_SHORT_ANOMALY = config['LEN_SHORT_ANOMALY']
+COUNT_CONTINUE_SHORT = config['COUNT_CONTINUE_SHORT']
+COUNT_CONTINUE_LONG = config['COUNT_CONTINUE_LONG']
+SHORT_TRESHOLD = config['SHORT_TRESHOLD']
+LONG_TRESHOLD = config['LONG_TRESHOLD']
 POWER_FILL = config['POWER_FILL']
+
 
 # Create directories if they don't exist
 os.makedirs(CSV_SAVE_RESULT, exist_ok=True)
@@ -69,7 +76,7 @@ elif opt.file_format == 'sqlite':
 
 # Preprocess data
 time_ = test_df['timestamp']
-# logger.warning(time_)
+logger.warning(time_)
 test_df['index'] = test_df.index
 test_df = test_df[test_df[POWER_ID] > POWER_LIMIT]
 logger.warning(test_df)
@@ -127,7 +134,8 @@ for i in range(NUM_GROUPS):
 
     group = test_df[group['kks']]
     scaler = scaler_list[i]
-    scaled_data = pd.DataFrame(
+    scaled_data = group
+    pd.DataFrame(
         data=scaler.transform(group),
         columns=group.columns
     )
@@ -153,15 +161,11 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
     df_lstm = pd.DataFrame(each_loss, columns=scaled_data.columns)
     df_lstm['target_value'] = loss
     df_lstm['softmax'] = prob
-    # df_lstm['timestamp'] = np.array(test_time)
     df_lstm.index = test_time[:len_size][::LAG]
-    print(str(df_lstm.index[0]))
     df_timestamps = pd.DataFrame()
     df_timestamps['timestamp'] = time_
-    print(df_timestamps)
     df_lstm = pd.merge(df_lstm, df_timestamps, on='timestamp', how='right')
-    # logger.info(df_lstm)
-    # df_lstm['index_'] = np.array(index)
+    logger.info(df_lstm)
       # Можно указать 'zeroes', чтобы заполнять нулями
     if POWER_FILL == 'last_value':
         df_lstm.fillna(method='ffill', inplace=True)  # Заполняем пропущенные значения последними непустыми значениями
@@ -188,9 +192,17 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
     rolling_loss = df_lstm.rolling(window=ROLLING_MEAN_LOSS, axis='rows', min_periods=1).mean()
     rolling_loss = rolling_loss.drop(columns=zero_group)
     rolling_loss = rolling_loss.drop(columns = ['softmax'])
-    treshold = hist_threshold(rolling_loss['target_value'], ANOMALY_TRESHOLD)
-    interval_list, idx_list = get_anomaly_interval(rolling_loss['target_value'], treshold, min_interval_len=COUNT_ANOMALY)
+    short_treshold = np.percentile(rolling_loss['target_value'], SHORT_TRESHOLD)
+    long_treshold = np.percentile(rolling_loss['target_value'], LONG_TRESHOLD)
+    interval_list, idx_list = get_anomaly_interval(rolling_loss['target_value'],
+                                                   threshold_short = short_treshold,
+                                                   threshold_long = long_treshold,
+                                                   len_long = LEN_LONG_ANOMALY,
+                                                   len_short = LEN_SHORT_ANOMALY,
+                                                   count_continue_short = COUNT_CONTINUE_SHORT,
+                                                   count_continue_long = COUNT_CONTINUE_LONG)
     time = df_lstm['timestamp']
+
     for j in idx_list:
         top_list = rolling_loss[j[0]:j[1]].drop(columns='target_value').mean().sort_values(ascending=False).index[:COUNT_TOP].to_list()
         # Create a dictionary for each anomaly
