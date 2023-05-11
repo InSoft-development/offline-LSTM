@@ -92,7 +92,10 @@ def get_anomaly_interval(loss, threshold_short, threshold_long, len_long, len_sh
          if len(loss_interval)>len_long:
           interval_list.append(loss_interval)
           logger.info(f'Add anomaly interval, len {len(loss_interval)}')
-          idx_list.append((i-len(loss_interval),i))
+          if i-len(loss_interval) > 0:
+            idx_list.append((i-len(loss_interval),i))
+          else: 
+            idx_list.append((0,i))
           sum_anomaly+=len(loss_interval)
          count = 0
          loss_interval.clear()
@@ -108,7 +111,10 @@ def get_anomaly_interval(loss, threshold_short, threshold_long, len_long, len_sh
          if len(loss_interval)>len_short:
           interval_list.append(loss_interval)
           logger.info(f'Add anomaly interval, len {len(loss_interval)}')
-          idx_list.append((i-len(loss_interval),i))
+          if i-len(loss_interval) > 0:
+                idx_list.append((i-len(loss_interval),i))
+          else: 
+            idx_list.append((0,i))
           sum_anomaly+=len(loss_interval)
          count = 0
          loss_interval.clear()
