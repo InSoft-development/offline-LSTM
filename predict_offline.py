@@ -159,12 +159,14 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
     prob = softmax(loss)
     each_loss = np.abs(yhat - preds)
     df_lstm = pd.DataFrame(each_loss, columns=scaled_data.columns)
+    
     df_lstm['target_value'] = loss
     df_lstm['softmax'] = prob
     df_lstm.index = test_time[:len_size][::LAG]
     df_timestamps = pd.DataFrame()
     df_timestamps['timestamp'] = time_
     df_lstm = pd.merge(df_lstm, df_timestamps, on='timestamp', how='right')
+    
     logger.info(df_lstm)
       # Можно указать 'zeroes', чтобы заполнять нулями
     if POWER_FILL == 'last_value':
@@ -185,8 +187,13 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
 
     except:
         logger.info('No columns to drop')
-
-    df_lstm.to_csv(f'{CSV_SAVE_RESULT}/lstm_group_{i}.csv')
+        
+    df_loss = pd.DataFrame()
+    df_loss['target_value'] = df_lstm['target_value']
+    df_loss['softmax'] = df_lstm['softmax']
+    df_loss['timestamp'] = df_lstm['timestamp']
+    
+    
     data.to_csv(f'{CSV_DATA}/group_{i}.csv')
     logger.info(df_lstm)
     rolling_loss = df_lstm.rolling(window=ROLLING_MEAN_LOSS, axis='rows', min_periods=1).mean()
@@ -202,6 +209,7 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
                                                    count_continue_short = COUNT_CONTINUE_SHORT,
                                                    count_continue_long = COUNT_CONTINUE_LONG)
     time = df_lstm['timestamp']
+    
 
     for j in idx_list:
         top_list = rolling_loss[j[0]:j[1]].drop(columns='target_value').mean().sort_values(ascending=False).index[:COUNT_TOP].to_list()
@@ -215,7 +223,11 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
         dict_list.append(report_dict)
 
     # Save the dictionary to a json file
-    with open(f"{JSON_DATA}/group{i}.json", "w") as outfile:
+    with open(f"{JSON_DATA}/group_{i}.json", "w") as outfile:
         json.dump(dict_list, outfile, indent=4)
-
+    
+    rolling_loss['timestamp'] =  time
+    rolling_loss.drop(columns=['target_value'], inplace=True)
+    rolling_loss.to_csv(f'{CSV_SAVE_RESULT}/loss_{i}.csv', index = False)
+    df_loss.to_csv(f'{CSV_SAVE_RESULT}/predict_{i}.csv', index = False)
     dict_list = []  # Reset the dict_list for the next group
