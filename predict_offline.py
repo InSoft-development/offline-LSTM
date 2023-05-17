@@ -9,6 +9,7 @@ import json
 from loguru import logger
 from tensorflow.keras.models import load_model
 from scipy.special import softmax
+from sklearn.preprocessing import MinMaxScaler
 import clickhouse_connect
 from utils.smooth import exponential_smoothing, double_exponential_smoothing
 from utils.utils import load_config, get_len_size, hist_threshold, get_anomaly_interval
@@ -46,6 +47,7 @@ DROP_LIST = config['DROP_LIST']
 CSV_SAVE_RESULT = config['CSV_SAVE_RESULT']
 CSV_DATA = config['CSV_DATA']
 JSON_DATA = config['JSON_DATA']
+SCALER_LOSS = config['SCALER_LOSS']
 TEST_FILE = config['TEST_FILE']
 ROLLING_MEAN_LOSS = config['ROLLING_MEAN_LOSS']
 COUNT_TOP = config['COUNT_TOP']
@@ -62,6 +64,7 @@ POWER_FILL = config['POWER_FILL']
 os.makedirs(CSV_SAVE_RESULT, exist_ok=True)
 os.makedirs(CSV_DATA, exist_ok=True)
 os.makedirs(JSON_DATA, exist_ok=True)
+os.makedirs(SCALER_LOSS, exist_ok=True)
 
 
 # Load dataset based on file format
@@ -188,6 +191,12 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
     except:
         logger.info('No columns to drop')
         
+    scaler_loss = MinMaxScaler(feature_range=(0, 100))
+    loss_2d = np.reshape(df_lstm['target_value'].values, (-1,1))
+    scaler_loss.fit(loss_2d)
+    joblib.dump(scaler_loss, f'{SCALER_LOSS}/scaler_loss{i}.pkl')
+    df_lstm['target_value'] = scaler_loss.transform(loss_2d)
+     
     df_loss = pd.DataFrame()
     df_loss['target_value'] = df_lstm['target_value']
     df_loss['softmax'] = df_lstm['softmax']
@@ -199,8 +208,8 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
     rolling_loss = df_lstm.rolling(window=ROLLING_MEAN_LOSS, axis='rows', min_periods=1).mean()
     rolling_loss = rolling_loss.drop(columns=zero_group)
     rolling_loss = rolling_loss.drop(columns = ['softmax'])
-    short_treshold = np.percentile(rolling_loss['target_value'], SHORT_TRESHOLD)
-    long_treshold = np.percentile(rolling_loss['target_value'], LONG_TRESHOLD)
+    short_treshold = SHORT_TRESHOLD
+    long_treshold = LONG_TRESHOLD
     interval_list, idx_list = get_anomaly_interval(rolling_loss['target_value'],
                                                    threshold_short = short_treshold,
                                                    threshold_long = long_treshold,
@@ -229,5 +238,9 @@ for i, (data, scaled_data, model) in enumerate(zip(unscaled, group_list, model_l
     rolling_loss['timestamp'] =  time
     rolling_loss.drop(columns=['target_value'], inplace=True)
     rolling_loss.to_csv(f'{CSV_SAVE_RESULT}/loss_{i}.csv', index = False)
+    
+
+    logger.info(df_loss)
     df_loss.to_csv(f'{CSV_SAVE_RESULT}/predict_{i}.csv', index = False)
+
     dict_list = []  # Reset the dict_list for the next group
