@@ -156,13 +156,19 @@ def main():
         df_timestamps['timestamp'] = time_
         df_lstm = pd.merge(df_lstm, df_timestamps, on='timestamp', how='right')
         
-        # logger.info('OUTPUTdf_lstm)
-        # Можно указать 'zeroes', чтобы заполнять нулями
+       
+     
+            
+        scaler_loss = MinMaxScaler(feature_range=(0, 100))
+        loss_2d = np.reshape(df_lstm['target_value'].values, (-1,1))
+        scaler_loss.fit(loss_2d)
+        joblib.dump(scaler_loss, f"{config['SCALER_LOSS']}/scaler_loss{i}.pkl")
+        df_lstm['target_value'] = scaler_loss.transform(loss_2d)
+
         if config['POWER_FILL'] == 'last_value':
-            df_lstm.fillna(method='ffill', inplace=True)  # Заполняем пропущенные значения последними непустыми значениями
+                df_lstm.fillna(method='ffill', inplace=True)  # Заполняем пропущенные значения последними непустыми значениями
         elif config['POWER_FILL'] == 'zeroes':
-            df_lstm.fillna(0, inplace=True) 
-        # logger.error(df_lstm)
+            df_lstm.fillna(0, inplace=True)    # Можно указать 'zeroes', чтобы заполнять нулями
         try:
             if i != 0:
                 df_lstm = df_lstm.drop(columns=config['DROP_LIST'])
@@ -176,12 +182,6 @@ def main():
 
         except:
             logger.info('No columns to drop')
-            
-        scaler_loss = MinMaxScaler(feature_range=(0, 100))
-        loss_2d = np.reshape(df_lstm['target_value'].values, (-1,1))
-        scaler_loss.fit(loss_2d)
-        joblib.dump(scaler_loss, f"{config['SCALER_LOSS']}/scaler_loss{i}.pkl")
-        df_lstm['target_value'] = scaler_loss.transform(loss_2d)
         df_lstm = df_lstm.replace(0, np.nan)
         
         df_loss = pd.DataFrame()
