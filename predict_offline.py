@@ -7,6 +7,7 @@ import joblib
 import os
 import tensorflow as tf
 import numpy as np
+import scipy
 import argparse
 import json
 from loguru import logger
@@ -156,9 +157,12 @@ def main():
         df_timestamps['timestamp'] = time_
         df_lstm = pd.merge(df_lstm, df_timestamps, on='timestamp', how='right')
         
-       
-     
-            
+        df_lstm['target_value']
+        hist = np.histogram(df_lstm['target_value'].values, bins=100) 
+        #as saving scaler - we can save hist to csv, i think
+        dist = scipy.stats.rv_histogram(hist) 
+        df_lstm['target_value'] = dist.cdf(df_lstm['target_value'].values)*100
+        
         scaler_loss = MinMaxScaler(feature_range=(0, 100))
         loss_2d = np.reshape(df_lstm['target_value'].values, (-1,1))
         scaler_loss.fit(loss_2d)
