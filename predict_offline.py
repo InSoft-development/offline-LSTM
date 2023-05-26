@@ -21,6 +21,7 @@ from utils.utils import load_config, get_len_size, hist_threshold, get_anomaly_i
 import matplotlib.pyplot as plt
 
 
+        
 def set_tf_config():
     physical_devices = tf.config.list_physical_devices('GPU')
     for device in physical_devices:
@@ -103,6 +104,7 @@ def main():
     config = load_config(f'{opt.config_path}/config_offline.yaml')
     ensure_directories_exist(config)
     test_df = load_dataset(opt.file_format, config['TEST_FILE'])
+    logger.info(f"DATAFRAME: \n {test_df}")
     model_list, scaler_list = load_models_and_scalers(config['NUM_GROUPS'], config['WEIGHTS'], config['SCALER'])
     groups = load_groups(opt, config['KKS'])
     logger.info(groups)
@@ -113,6 +115,7 @@ def main():
     zero_group = g['kks']
     group_list = []
     unscaled = []
+    
     for i in range(config['NUM_GROUPS']):
         group = groups[groups['group'] == i]
         names = groups['name'][groups['group'] == i]
@@ -125,8 +128,7 @@ def main():
 
         group = test_df[group['kks']]
         scaler = scaler_list[i]
-        scaled_data = group
-        pd.DataFrame(
+        scaled_data = pd.DataFrame(
             data=scaler.transform(group),
             columns=group.columns
         )
@@ -151,24 +153,32 @@ def main():
         each_loss = np.abs(yhat - preds)
         df_lstm = pd.DataFrame(each_loss, columns=scaled_data.columns)
         
-        df_lstm['target_value'] = loss
+        logger.info(f"Scaling loss {config['SCALER_LOSS_NAME']}")
+        
+        def scaler_loss(target_value, scaler_name, range_loss = 100):
+            if scaler_name == 'cdf':
+                hist = np.histogram(target_value, bins=range_loss)
+                # logger.debug(target_value)
+                scaler_loss = scipy.stats.rv_histogram(hist) 
+                # logger.debug(hist)
+                target_value = scaler_loss.cdf(target_value)*range_loss
+                scaler_loss = hist
+            elif scaler_name == 'minmax':
+                scaler_loss = MinMaxScaler(feature_range=(0, range_loss))
+                loss_2d = np.reshape(target_value, (-1,1))
+                scaler_loss.fit(loss_2d)
+                target_value = scaler_loss.transform(loss_2d)
+            return target_value, scaler_loss
+        
+        target_value, scaler_loss = scaler_loss(loss, config['SCALER_LOSS_NAME'])
+        df_lstm['target_value'] = target_value   
+        joblib.dump(scaler_loss, f"{config['SCALER_LOSS']}/scaler_loss{i}.pkl")
+
         df_lstm.index = test_time[:len_size][::config['LAG']]
         df_timestamps = pd.DataFrame()
         df_timestamps['timestamp'] = time_
         df_lstm = pd.merge(df_lstm, df_timestamps, on='timestamp', how='right')
         
-        df_lstm['target_value']
-        hist = np.histogram(df_lstm['target_value'].values, bins=100) 
-        #as saving scaler - we can save hist to csv, i think
-        dist = scipy.stats.rv_histogram(hist) 
-        df_lstm['target_value'] = dist.cdf(df_lstm['target_value'].values)*100
-        
-        scaler_loss = MinMaxScaler(feature_range=(0, 100))
-        loss_2d = np.reshape(df_lstm['target_value'].values, (-1,1))
-        scaler_loss.fit(loss_2d)
-        joblib.dump(scaler_loss, f"{config['SCALER_LOSS']}/scaler_loss{i}.pkl")
-        df_lstm['target_value'] = scaler_loss.transform(loss_2d)
-
         if config['POWER_FILL'] == 'last_value':
                 df_lstm.fillna(method='ffill', inplace=True)  # Заполняем пропущенные значения последними непустыми значениями
         elif config['POWER_FILL'] == 'zeroes':
