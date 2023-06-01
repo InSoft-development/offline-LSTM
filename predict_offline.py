@@ -204,6 +204,7 @@ def main():
         
         data.to_csv(f"{config['CSV_DATA']}/group_{i}.csv")
         df_lstm = df_lstm.drop(columns=zero_group)
+        df_lstm = df_lstm.drop(columns=['target_value'])
         df_lstm.to_csv(f"{config['CSV_SAVE_RESULT_LOSS']}/loss_{i}.csv", index = False)
         logger.info(f"LOSS DATA FRAME: \n {df_lstm}")
         
