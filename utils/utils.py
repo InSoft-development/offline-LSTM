@@ -74,12 +74,15 @@ def get_interval(data,loss,df,time,count_anomaly,anomaly_treshold,left_space, ri
       
       i+=1
     return report_list, data_list, history_list
-def get_anomaly_interval(loss, threshold_short, threshold_long, len_long, len_short,count_continue_short = 10, count_continue_long = 15):
-  interval_list = []
+
+def get_anomaly_interval(loss, threshold_short, threshold_long, len_long, len_short, count_continue_short=10, count_continue_long=15):
+  long_interval_list = []
+  short_interval_list = []
   loss_interval = []
   count = 0
   i = 0
-  idx_list = []
+  long_idx_list = []
+  short_idx_list = []
   sum_anomaly = 0
   for val in loss:
     i+=1
@@ -90,15 +93,16 @@ def get_anomaly_interval(loss, threshold_short, threshold_long, len_long, len_sh
        loss_interval.append(val)
        if count>count_continue_long:
          if len(loss_interval)>len_long:
-          interval_list.append(loss_interval)
-          logger.info(f'Add anomaly interval, len {len(loss_interval)}')
+          long_interval_list.append(loss_interval)
+          logger.info(f'Add anomaly long interval, len {len(loss_interval)}')
           if i-len(loss_interval) > 0:
-            idx_list.append((i-len(loss_interval),i))
+            long_idx_list.append((i-len(loss_interval),i))
           else: 
-            idx_list.append((0,i))
+            long_idx_list.append((0,i))
           sum_anomaly+=len(loss_interval)
          count = 0
          loss_interval.clear()
+  
   i = 0
   for val in loss:
     i+=1
@@ -109,15 +113,17 @@ def get_anomaly_interval(loss, threshold_short, threshold_long, len_long, len_sh
        loss_interval.append(val)
        if count>count_continue_short:
          if len(loss_interval)>len_short:
-          interval_list.append(loss_interval)
-          logger.info(f'Add anomaly interval, len {len(loss_interval)}')
-          if i-len(loss_interval) > 0:
-                idx_list.append((i-len(loss_interval),i))
-          else: 
-            idx_list.append((0,i))
-          sum_anomaly+=len(loss_interval)
+          isInLong = any(start<=i-len(loss_interval)<end for start,end in long_idx_list)
+          if not isInLong:
+            short_interval_list.append(loss_interval)
+            logger.info(f'Add anomaly short interval, len {len(loss_interval)}')
+            if i-len(loss_interval) > 0:
+                short_idx_list.append((i-len(loss_interval),i))
+            else: 
+                short_idx_list.append((0,i))
+            sum_anomaly+=len(loss_interval)
          count = 0
          loss_interval.clear()
-      
+
   logger.info(f'Sum anomaly {sum_anomaly}, part of anomaly {round(sum_anomaly/len(loss),3)}')
-  return interval_list, idx_list
+  return long_interval_list+short_interval_list, long_idx_list+short_idx_list
