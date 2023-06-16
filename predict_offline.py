@@ -17,10 +17,10 @@ from sklearn.preprocessing import MinMaxScaler
 import clickhouse_connect
 from utils.smooth import exponential_smoothing, double_exponential_smoothing
 from utils.utils import load_config, get_len_size, hist_threshold, get_anomaly_interval
-
+import sys
 import matplotlib.pyplot as plt
 
-
+VERSION = "1.0.0"
         
 def set_tf_config():
     physical_devices = tf.config.list_physical_devices('GPU')
@@ -33,6 +33,8 @@ def get_options():
     parser.add_argument('--config_path', type=str, default='')
     parser.add_argument('--file_format', type=str, default='db')
     parser.add_argument('--csv_kks', type=bool, default=False)
+    parser.add_argument("-v", "--version", action="store_true", help="вывести версию программы")
+
     return parser.parse_args()
 
 def ensure_directories_exist(config):
@@ -101,6 +103,9 @@ def main():
 # Load configuration
     set_tf_config()
     opt = get_options()
+    if opt.version:
+        print("Версия predict offline:", VERSION)
+        sys.exit()
     config = load_config(f'{opt.config_path}/config_offline.yaml')
     ensure_directories_exist(config)
     test_df = load_dataset(opt.file_format, config['TEST_FILE'])
