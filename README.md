@@ -1,4 +1,5 @@
 # Offline LSTM (version 1.0.0)
+
 ## Основное описание
 
 ![1687262493595](image/README/1687262493595.png)
