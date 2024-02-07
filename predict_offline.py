@@ -12,6 +12,7 @@ import argparse
 import json
 from loguru import logger
 from tensorflow.keras.models import load_model
+from tqdm import tqdm
 from scipy.special import softmax
 from sklearn.preprocessing import MinMaxScaler
 import clickhouse_connect
@@ -20,7 +21,11 @@ from utils.utils import load_config, get_len_size, hist_threshold, get_anomaly_i
 import sys
 import matplotlib.pyplot as plt
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
+
+os.environ["OMP_NUM_THREADS"] = "2" 
+os.environ["MKL_NUM_THREADS"] = "2"
+# torch.set_num_threads(2)
         
 def set_tf_config():
     physical_devices = tf.config.list_physical_devices('GPU')
@@ -158,6 +163,7 @@ def main():
         each_loss = np.abs(yhat - preds)
         df_lstm = pd.DataFrame(each_loss, columns=scaled_data.columns)
         
+        
         logger.info(f"Scaling loss {config['SCALER_LOSS_NAME']}")
         
         def scaler_loss(target_value, scaler_name, range_loss = 100):
@@ -184,10 +190,13 @@ def main():
         df_timestamps['timestamp'] = time_
         df_lstm = pd.merge(df_lstm, df_timestamps, on='timestamp', how='right')
         
-        if config['POWER_FILL'] == 'last_value':
-                df_lstm.fillna(method='ffill', inplace=True)  # Заполняем пропущенные значения последними непустыми значениями
-        elif config['POWER_FILL'] == 'zeroes':
+        # if config['POWER_FILL'] == 'last_value':
+        #         df_lstm.fillna(method='ffill', inplace=True)  # Заполняем пропущенные значения последними непустыми значениями
+        if config['POWER_FILL']:
+            
             df_lstm.fillna(0, inplace=True)    # Можно указать 'zeroes', чтобы заполнять нулями
+           
+            
         try:
             if i != 0:
                 df_lstm = df_lstm.drop(columns=config['DROP_LIST'])
@@ -206,10 +215,12 @@ def main():
         df_loss = pd.DataFrame()
         df_loss['target_value'] = df_lstm['target_value']
         df_loss['timestamp'] = df_lstm['timestamp']
-        
+    
         data.to_csv(f"{config['CSV_DATA']}/group_{i}.csv")
         df_lstm = df_lstm.drop(columns=zero_group)
         df_lstm = df_lstm.drop(columns=['target_value'])
+        # df_lstm = df.lstm.drop(columns)
+        # df_lstm.drop(columns = )
         df_lstm.to_csv(f"{config['CSV_SAVE_RESULT_LOSS']}/loss_{i}.csv", index = False)
         logger.info(f"LOSS DATA FRAME: \n {df_lstm}")
         
