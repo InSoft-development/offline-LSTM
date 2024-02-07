@@ -43,6 +43,10 @@ pip install -r requirements.txt
 ```
 python predcit_offline.py --config_path SOCHI
 ```
+Для зануления ***target_value*** при мощности ниже лимита, дополнительно нужно выделить:
+```
+python power_filter.py --config_path SOCHI
+```
 
 ### Ожидаемые результаты
 
