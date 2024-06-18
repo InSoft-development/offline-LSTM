@@ -1,6 +1,8 @@
 import warnings
 warnings.filterwarnings('ignore')
 
+
+
 import time
 import pandas as pd
 import joblib
@@ -17,11 +19,16 @@ from scipy.special import softmax
 from sklearn.preprocessing import MinMaxScaler
 import clickhouse_connect
 from utils.smooth import exponential_smoothing, double_exponential_smoothing
-from utils.utils import load_config, get_len_size, hist_threshold, get_anomaly_interval
+from utils.utils import load_config, get_len_size, hist_threshold, get_anomaly_interval,kalman_filter
 import sys
 import matplotlib.pyplot as plt
 
 VERSION = "1.0.1"
+
+# Поиск "верхней" директории
+current_dir = os.path.dirname(__file__)
+# Путь к директории на уровень выше
+parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
 
 os.environ["OMP_NUM_THREADS"] = "2" 
 os.environ["MKL_NUM_THREADS"] = "2"
@@ -63,10 +70,10 @@ def load_models_and_scalers(num_groups, weights_path, scaler_path):
     model_list = []
     scaler_list = []
     for i in range(num_groups):
-        model_file = f'{weights_path}/lstm_group_{i}.h5'
+        model_file = f'{parent_dir}/{weights_path}/lstm_group_{i}.h5'
         model = load_model(model_file)
 
-        scaler_file = f'{scaler_path}/scaler_{i}.pkl'
+        scaler_file = f'{parent_dir}/{scaler_path}/scaler_{i}.pkl'
         scaler = joblib.load(scaler_file)
         scaler_list.append(scaler)
         model_list.append(model)
@@ -79,6 +86,7 @@ def load_groups(opt, kks):
         groups = client.query_df("SELECT * FROM kks")
     else:
         groups = pd.read_csv(kks, sep=';')
+        groups['group'] = groups['group'].astype(int)
     return groups
         
 def preprocess_data(df, power_id, power_limit, config):
@@ -86,7 +94,9 @@ def preprocess_data(df, power_id, power_limit, config):
     df = df[df[power_id] > power_limit]
     test_time = df['timestamp']
     df.drop(columns=['timestamp'], inplace=True)
-
+    KALMAN = False
+    if KALMAN:
+        df = kalman_filter(df)
     if config['MEAN_NAN']:
         df.fillna(df.mean(), inplace=True)
 
@@ -111,7 +121,7 @@ def main():
     if opt.version:
         print("Версия predict offline:", VERSION)
         sys.exit()
-    config = load_config(f'{opt.config_path}/config_offline.yaml')
+    config = load_config(f'{opt.config_path}')
     ensure_directories_exist(config)
     test_df = load_dataset(opt.file_format, config['TEST_FILE'])
     logger.info(f"DATAFRAME: \n {test_df}")

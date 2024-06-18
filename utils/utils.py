@@ -5,8 +5,41 @@ import pandas as pd
 from yaml import load
 from yaml import FullLoader
 from loguru import logger
+from pykalman import KalmanFilter
+from tqdm.auto import tqdm
 
-
+def kalman_filter(df):
+    # Создаем новый DataFrame для отфильтрованных данных
+    filtered_df = pd.DataFrame(index=df.index)
+    
+    # Инициализируем прогресс-бар
+    pbar = tqdm(total=len(df.columns), desc='Processing Columns')
+    
+    for column in df.columns:
+        if pd.api.types.is_numeric_dtype(df[column]):
+            # Инициализация фильтра Калмана
+            kf = KalmanFilter(initial_state_mean=0, n_dim_obs=1)
+            
+            # Предполагаем, что данные в столбце - одномерные наблюдения
+            measurements = df[column].values
+            measurements = measurements.reshape(-1, 1) # Преобразуем в формат, подходящий для фильтра Калмана
+            
+            # Применяем фильтр к данным
+            (filtered_state_means, _) = kf.filter(measurements)
+            
+            # Сохраняем отфильтрованные значения в новом DataFrame
+            filtered_df[column] = filtered_state_means.flatten()
+        else:
+            # Если столбец не числовой, просто копируем его без изменений
+            filtered_df[column] = df[column]
+        
+        # Обновляем прогресс-бар
+        pbar.update(1)
+    
+    # Закрываем прогресс-бар после завершения цикла
+    pbar.close()
+    
+    return filtered_df
 def set_gpu():
     physical_devices = tf.config.list_physical_devices('GPU')
     if physical_devices:

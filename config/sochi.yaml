@@ -1,0 +1,45 @@
+#Преобразование входных данных
+ROLLING_MEAN: True
+EXP_SMOOTH: False
+DOUBLE_EXP_SMOOTH: False
+ROLLING_MEAN_WINDOW: 32
+
+# Входные параметры
+KKS: 'data/sochi/kks_with_groups_Sochi_last.csv' #Файл с группами
+WEIGHTS: 'Reports/SOCHI/model_pt'
+SCALER: 'Reports/SOCHI/scaler_data'
+
+CSV_SAVE_RESULT_PREDICT: 'Reports/SOCHI/csv_predict/'
+CSV_SAVE_RESULT_LOSS: 'Reports/SOCHI/csv_loss/'
+CSV_DATA: 'Reports/SOCHI/csv_data/'
+JSON_DATA: 'Reports/SOCHI/json_interval/'
+SCALER_LOSS: 'Reports/SOCHI/scaler_loss/'
+# TEST_FILE: SELECT * FROM slices order by timestamp limit 1
+TEST_FILE: 'data/sochi/slices.csv'
+
+
+# Параметры алгоритма
+POWER_ID: 'Sochi2.GT.AM.20CFA10CE001-AM.Q'
+POWER_LIMIT: 19
+POWER_FILL: True
+COUNT_NEXT: 288 #количество отсчетов отслеживания мощности при заливке
+NUM_GROUPS: 12 #Количество групп
+LAG: 1 #Значение лага обучения
+MEAN_NAN: False
+DROP_NAN: True
+AUTO_DROP_LIST: False # удаление датчиков нулевой группы
+DROP_LIST: [] #удаление датчиков из отчета CSV
+
+
+# COUNT_ANOMALY: 300
+ROLLING_MEAN_LOSS: 128
+SCALER_LOSS_NAME: 'cdf'  # или minmax
+# ANOMALY_TRESHOLD: 0.8
+LEN_LONG_ANOMALY: 800
+LEN_SHORT_ANOMALY: 300
+COUNT_CONTINUE_SHORT: 10
+COUNT_CONTINUE_LONG: 15
+SHORT_TRESHOLD: 98
+LONG_TRESHOLD: 97
+
+COUNT_TOP: 3

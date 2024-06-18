@@ -1,0 +1,43 @@
+#Преобразование входных данных
+ROLLING_MEAN: True
+EXP_SMOOTH: False
+DOUBLE_EXP_SMOOTH: False
+ROLLING_MEAN_WINDOW: 64
+
+# Входные параметры
+KKS: 'data/dataset3/kks_with_groups.csv' #Файл с группами
+WEIGHTS: 'Reports/DATASET3/model_pt'
+SCALER: 'Reports/DATASET3/scaler_data'
+
+CSV_SAVE_RESULT_PREDICT: 'Reports/DATASET3/csv_predict/'
+CSV_SAVE_RESULT_LOSS: 'Reports/DATASET3/csv_loss/'
+CSV_DATA: 'Reports/DATASET3/csv_data/'
+JSON_DATA: 'Reports/DATASET3/json_interval/'
+SCALER_LOSS: 'Reports/DATASET3/scaler_loss/'
+# TEST_FILE: SELECT * FROM slices order by timestamp limit 1
+TEST_FILE: 'data/dataset3/slices.csv'
+
+# Параметры алгоритма
+POWER_ID: 'х023_10MKA10CE903'
+POWER_LIMIT: 20
+POWER_FILL: True
+COUNT_NEXT: 288 #количество отсчетов отслеживания мощности при заливке
+NUM_GROUPS: 2 #Количество групп
+LAG: 1 #Значение лага обучения
+MEAN_NAN: False
+DROP_NAN: True
+AUTO_DROP_LIST: False # удаление датчиков нулевой группы
+DROP_LIST: [] #удаление датчиков из отчета CSV
+
+
+ROLLING_MEAN_LOSS: 128
+SCALER_LOSS_NAME: 'cdf'  # или minmax
+# ANOMALY_TRESHOLD: 0.8
+LEN_LONG_ANOMALY: 800
+LEN_SHORT_ANOMALY: 300
+COUNT_CONTINUE_SHORT: 10
+COUNT_CONTINUE_LONG: 15
+SHORT_TRESHOLD: 98
+LONG_TRESHOLD: 97
+
+COUNT_TOP: 3

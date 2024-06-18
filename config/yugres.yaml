@@ -1,0 +1,43 @@
+#Преобразование входных данных
+ROLLING_MEAN: False
+EXP_SMOOTH: False
+DOUBLE_EXP_SMOOTH: False
+ROLLING_MEAN_WINDOW: 32
+
+# Входные параметры
+KKS: 'data/yugres/kks_y_2.csv' #Файл с группами
+WEIGHTS: 'Reports/YUGRES/model_pt'
+SCALER: 'Reports/YUGRES/scaler_data'
+
+CSV_SAVE_RESULT_PREDICT: 'Reports/YUGRES/csv_predict/'
+CSV_SAVE_RESULT_LOSS: 'Reports/YUGRES/csv_loss/'
+CSV_DATA: 'Reports/YUGRES/csv_data/'
+JSON_DATA: 'Reports/YUGRES/json_interval/'
+SCALER_LOSS: 'Reports/YUGRES/scaler_loss/'
+# TEST_FILE: SELECT * FROM slices order by timestamp limit 1
+TEST_FILE: 'data/yugres/yugres.csv'
+
+# Параметры алгоритма
+POWER_ID: '20MBY10CE901_XQ01'
+POWER_LIMIT: 190
+POWER_FILL: True
+COUNT_NEXT: 288 #количество отсчетов отслеживания мощности при заливке
+NUM_GROUPS: 10 #Количество групп
+LAG: 1 #Значение лага обучения
+MEAN_NAN: False
+DROP_NAN: True
+AUTO_DROP_LIST: False # удаление датчиков нулевой группы
+DROP_LIST: [] #удаление датчиков из отчета CSV
+
+
+ROLLING_MEAN_LOSS: 128
+SCALER_LOSS_NAME: 'cdf'  # или minmax
+# ANOMALY_TRESHOLD: 0.8
+LEN_LONG_ANOMALY: 800
+LEN_SHORT_ANOMALY: 300
+COUNT_CONTINUE_SHORT: 10
+COUNT_CONTINUE_LONG: 15
+SHORT_TRESHOLD: 98
+LONG_TRESHOLD: 97
+
+COUNT_TOP: 3
