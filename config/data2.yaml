@@ -6,14 +6,14 @@ ROLLING_MEAN_WINDOW: 32
 
 # Входные параметры
 KKS: 'data/dataset2/kks_with_groups_new.csv' #Файл с группами
-WEIGHTS: 'Reports/DATASET2/model_pt'
-SCALER: 'Reports/DATASET2/scaler_data'
+WEIGHTS: 'Reports/dataset2/model_pt'
+SCALER: 'Reports/dataset2/scaler_data'
 
-CSV_SAVE_RESULT_PREDICT: 'Reports/DATASET2/csv_predict/'
-CSV_SAVE_RESULT_LOSS: 'Reports/DATASET2/csv_loss/'
-CSV_DATA: 'Reports/DATASET2/csv_data/'
-JSON_DATA: 'Reports/DATASET2/json_interval/'
-SCALER_LOSS: 'Reports/DATASET2/scaler_loss/'
+CSV_SAVE_RESULT_PREDICT: 'Reports/dataset2/csv_predict/'
+CSV_SAVE_RESULT_LOSS: 'Reports/dataset2/csv_loss/'
+CSV_DATA: 'Reports/dataset2/csv_data/'
+JSON_DATA: 'Reports/dataset2/json_interval/'
+SCALER_LOSS: 'Reports/dataset2/scaler_loss/'
 # TEST_FILE: SELECT * FROM slices order by timestamp limit 1
 TEST_FILE: 'data/dataset2/slices.csv'
 

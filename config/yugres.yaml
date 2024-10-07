@@ -6,14 +6,14 @@ ROLLING_MEAN_WINDOW: 32
 
 # Входные параметры
 KKS: 'data/yugres/kks_y_2.csv' #Файл с группами
-WEIGHTS: 'Reports/YUGRES/model_pt'
-SCALER: 'Reports/YUGRES/scaler_data'
+WEIGHTS: 'Reports/yugres/model_pt'
+SCALER: 'Reports/yugres/scaler_data'
 
-CSV_SAVE_RESULT_PREDICT: 'Reports/YUGRES/csv_predict/'
-CSV_SAVE_RESULT_LOSS: 'Reports/YUGRES/csv_loss/'
-CSV_DATA: 'Reports/YUGRES/csv_data/'
-JSON_DATA: 'Reports/YUGRES/json_interval/'
-SCALER_LOSS: 'Reports/YUGRES/scaler_loss/'
+CSV_SAVE_RESULT_PREDICT: 'Reports/yugres/csv_predict/'
+CSV_SAVE_RESULT_LOSS: 'Reports/yugres/csv_loss/'
+CSV_DATA: 'Reports/yugres/csv_data/'
+JSON_DATA: 'Reports/yugres/json_interval/'
+SCALER_LOSS: 'Reports/yugres/scaler_loss/'
 # TEST_FILE: SELECT * FROM slices order by timestamp limit 1
 TEST_FILE: 'data/yugres/yugres.csv'
 

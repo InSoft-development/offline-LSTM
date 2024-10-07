@@ -6,14 +6,14 @@ ROLLING_MEAN_WINDOW: 32
 
 # Входные параметры
 KKS: 'data/sochi/kks_with_groups_Sochi_last.csv' #Файл с группами
-WEIGHTS: 'Reports/SOCHI/model_pt'
-SCALER: 'Reports/SOCHI/scaler_data'
+WEIGHTS: 'Reports/sochi/model_pt'
+SCALER: 'Reports/sochi/scaler_data'
 
-CSV_SAVE_RESULT_PREDICT: 'Reports/SOCHI/csv_predict/'
-CSV_SAVE_RESULT_LOSS: 'Reports/SOCHI/csv_loss/'
-CSV_DATA: 'Reports/SOCHI/csv_data/'
-JSON_DATA: 'Reports/SOCHI/json_interval/'
-SCALER_LOSS: 'Reports/SOCHI/scaler_loss/'
+CSV_SAVE_RESULT_PREDICT: 'Reports/sochi/csv_predict/'
+CSV_SAVE_RESULT_LOSS: 'Reports/sochi/csv_loss/'
+CSV_DATA: 'Reports/sochi/csv_data/'
+JSON_DATA: 'Reports/sochi/json_interval/'
+SCALER_LOSS: 'Reports/sochi/scaler_loss/'
 # TEST_FILE: SELECT * FROM slices order by timestamp limit 1
 TEST_FILE: 'data/sochi/slices.csv'
 
