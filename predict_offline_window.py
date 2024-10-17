@@ -85,7 +85,7 @@ def load_models_and_scalers(num_groups, weights_path, scaler_path):
     model_list = []
     scaler_list = []
     for i in range(num_groups):
-        model_file = f'{parent_dir}/{weights_path}/lstm_group_{i}.h5'
+        model_file = f'{parent_dir}/{weights_path}/lstm_group_{i}.keras'
         model = load_model(model_file)
 
         scaler_file = f'{parent_dir}/{scaler_path}/scaler_{i}.pkl'
