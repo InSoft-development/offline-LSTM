@@ -141,7 +141,7 @@ def main():
         names = groups['name'][groups['group'] == i]
 
         if i != 0:
-            group = group.append(groups[groups['group'] == 0])
+            group = pd.concat([group, groups[groups['group'] == 0]])
 
         if len(group) == 0:
             continue

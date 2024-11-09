@@ -13,11 +13,12 @@ import scipy
 import argparse
 import json
 from loguru import logger
-from tensorflow.keras.models import load_model
+# from tensorflow.keras.models import load_model
+from keras.models import load_model
 from tqdm import tqdm
 from scipy.special import softmax
 from sklearn.preprocessing import MinMaxScaler
-import clickhouse_connect
+# import clickhouse_connect
 from utils.smooth import exponential_smoothing, double_exponential_smoothing
 from utils.utils import load_config, get_len_size, hist_threshold, get_anomaly_interval,kalman_filter
 import sys
@@ -156,7 +157,7 @@ def main():
         names = groups['name'][groups['group'] == i]
 
         if i != 0:
-            group = group.append(groups[groups['group'] == 0])
+            group = pd.concat([group, groups[groups['group'] == 0]])
 
         if len(group) == 0:
             continue
